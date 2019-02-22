@@ -24,4 +24,4 @@ MonoBehaviour:
     GitHub Repository: https://github.com/luisdiogo98/ktane-graphicMemory'
   version: 1.0
   outputFolder: build
-  previewImage: {fileID: 0}
+  previewImage: {fileID: 2800000, guid: 02137f98354d5014e8e2fb0555edfacc, type: 3}
