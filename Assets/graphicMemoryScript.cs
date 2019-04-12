@@ -209,6 +209,7 @@ public class graphicMemoryScript : MonoBehaviour
 		{
 			dominantShapeCount--;
 		}
+
 	}
 
 	void CalcStatements()
@@ -230,7 +231,7 @@ public class graphicMemoryScript : MonoBehaviour
 
 		statements[3][0] = FindMax(positionCount) == 0 ? true : false;
 		statements[3][1] = shapeCount[0] < shapeCount[1] ? true : false;
-		statements[2][2] = (colorCount[1] + colorCount[2] + colorCount[3]) < (colorCount[0] + colorCount[4] + colorCount[5]) ? true : false;
+		statements[3][2] = (colorCount[1] + colorCount[2] + colorCount[3]) < (colorCount[0] + colorCount[4] + colorCount[5]) ? true : false;
 		statements[3][3] = FindMaxMatrix(colorShapeCount).SequenceEqual(new int[] {1, 1} ) ? true : false;
 	
 		Debug.LogFormat("[Graphic Memory #{0}] Statements for the button in the {1}are {2}, {3}, {4} and {5}", moduleId, BtnToString(new List<int>(new int[] {1})), statements[0][0], statements[0][1], statements[0][2], statements[0][3]);
