@@ -220,12 +220,12 @@ public class graphicMemoryScript : MonoBehaviour
         statements[0][2] = dominantShapeCount > 0 ? true : false;
         statements[0][3] = AllEqual(colorCount) ? true : false;
 
-        statements[1][0] = FindMax(positionCount) == 3 ? true : false;
+        statements[1][0] = FindMax(positionCount) == 2 ? true : false;
         statements[1][1] = shapeCount[0] > shapeCount[1] ? true : false;
         statements[1][2] = (colorCount[1] + colorCount[2] + colorCount[3]) > (colorCount[0] + colorCount[4] + colorCount[5]) ? true : false;
         statements[1][3] = FindMaxMatrix(colorShapeCount).SequenceEqual(new int[] { 0, 3 }) ? true : false;
 
-        statements[2][0] = FindMax(positionCount) == 2 ? true : false;
+        statements[2][0] = FindMax(positionCount) == 3 ? true : false;
         statements[2][1] = FindMaxMatrix(colorShapeCount).SequenceEqual(new int[] { 1, 0 }) ? true : false;
         statements[2][2] = dominantShapeCount < 0 ? true : false;
         statements[2][3] = shapeCount[0] == shapeCount[1] ? true : false;
