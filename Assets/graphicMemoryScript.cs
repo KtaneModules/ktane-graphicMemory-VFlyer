@@ -5,6 +5,7 @@ using System.Linq;
 using UnityEngine;
 using KModkit;
 using System.Text.RegularExpressions;
+using rnd = UnityEngine.Random;
 
 public class graphicMemoryScript : MonoBehaviour
 {
@@ -31,8 +32,6 @@ public class graphicMemoryScript : MonoBehaviour
                                     new bool[] {false, false, false, false},
                                     new bool[] {false, false, false, false},
                                     new bool[] {false, false, false, false} };
-
-    static System.Random rnd = new System.Random();
 
     int btnPresses = 0;
     int btnPressesRequired;
@@ -102,7 +101,7 @@ public class graphicMemoryScript : MonoBehaviour
         labelShapes.Add(new List<KeyValuePair<string, int>>());
         labelShapes.Add(new List<KeyValuePair<string, int>>());
 
-        btnPressesRequired = rnd.Next() % 3 + 4;
+        btnPressesRequired = rnd.Range(4, 8);
     }
 
     void RandomizeButton(int btn)
@@ -112,16 +111,16 @@ public class graphicMemoryScript : MonoBehaviour
             btns[btn - 1].transform.GetChild(i).gameObject.SetActive(false);
         }
 
-        labelSelected[btn - 1] = rnd.Next() % 7;
+        labelSelected[btn - 1] = rnd.Range(0, 7);
         Transform label = btns[btn - 1].transform.GetChild(labelSelected[btn - 1]);
 
-        label.Rotate(0, ((rnd.Next() % 4) * 90), 0);
+        label.Rotate(0, ((rnd.Range(0, 4)) * 90), 0);
         label.gameObject.SetActive(true);
         labelShapes[btn - 1].Clear();
 
         for (int i = 0; i < label.childCount; i++)
         {
-            int colorIdx = rnd.Next() % 6;
+            int colorIdx = rnd.Range(0, 6);
             label.GetChild(i).GetComponentInChildren<Renderer>().material = colors[colorIdx];
 
             labelShapes[btn - 1].Add(new KeyValuePair<string, int>(label.GetChild(i).name, colorIdx));
