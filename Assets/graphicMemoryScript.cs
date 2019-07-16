@@ -431,7 +431,7 @@ public class graphicMemoryScript : MonoBehaviour
             if (i > 4)
                 foreach (KMSelectable btn in btns)
                 {
-                    btn.transform.Translate(new Vector3(0f, 0f, 0.0032f));
+                    btn.transform.localPosition = btn.transform.localPosition + new Vector3(0f, 0.0032f, 0f);
                 }
 
             if (i < 5)
@@ -439,9 +439,9 @@ public class graphicMemoryScript : MonoBehaviour
                 foreach (GameObject door in doors)
                 {
                     door.transform.GetChild(0).transform.localScale -= new Vector3(0.0006f, 0, 0);
-                    door.transform.GetChild(0).transform.Translate(new Vector3(-0.0025f, 0, 0));
+                    door.transform.GetChild(0).transform.localPosition = door.transform.GetChild(0).transform.localPosition + new Vector3(-0.0025f, 0, 0);
                     door.transform.GetChild(1).transform.localScale -= new Vector3(0.0006f, 0, 0);
-                    door.transform.GetChild(1).transform.Translate(new Vector3(0.0025f, 0, 0));
+                    door.transform.GetChild(1).transform.localPosition = door.transform.GetChild(1).transform.localPosition + new Vector3(0.0025f, 0, 0);
                 }
             }
 
@@ -472,16 +472,16 @@ public class graphicMemoryScript : MonoBehaviour
             if (i < 5)
                 foreach (KMSelectable btn in btns)
                 {
-                    btn.transform.Translate(new Vector3(0f, 0f, -0.0032f));
+                    btn.transform.localPosition = btn.transform.localPosition + new Vector3(0f, -0.0032f, 0f);
                 }
 
             if (i > 4)
             {
                 foreach (GameObject door in doors)
                 {
-                    door.transform.GetChild(1).transform.Translate(new Vector3(-0.0025f, 0, 0));
+                    door.transform.GetChild(1).transform.localPosition = door.transform.GetChild(1).transform.localPosition + new Vector3(-0.0025f, 0, 0);
                     door.transform.GetChild(1).transform.localScale += new Vector3(0.0006f, 0, 0);
-                    door.transform.GetChild(0).transform.Translate(new Vector3(0.0025f, 0, 0));
+                    door.transform.GetChild(0).transform.localPosition = door.transform.GetChild(0).transform.localPosition + new Vector3(0.0025f, 0, 0);
                     door.transform.GetChild(0).transform.localScale += new Vector3(0.0006f, 0, 0);
                 }
             }
@@ -522,14 +522,14 @@ public class graphicMemoryScript : MonoBehaviour
         for (int i = 0; i < 10; i++)
         {
             if (i > 4)
-                btns[lastPress - 1].transform.Translate(new Vector3(0f, 0f, 0.0032f));
+                btns[lastPress - 1].transform.localPosition = btns[lastPress - 1].transform.localPosition + new Vector3(0f, 0.0032f, 0f);
 
             if (i < 5)
             {
                 doors[lastPress - 1].transform.GetChild(0).transform.localScale -= new Vector3(0.0006f, 0, 0);
-                doors[lastPress - 1].transform.GetChild(0).transform.Translate(new Vector3(-0.0025f, 0, 0));
+                doors[lastPress - 1].transform.GetChild(0).transform.localPosition = doors[lastPress - 1].transform.GetChild(0).transform.localPosition + new Vector3(-0.0025f, 0, 0);
                 doors[lastPress - 1].transform.GetChild(1).transform.localScale -= new Vector3(0.0006f, 0, 0);
-                doors[lastPress - 1].transform.GetChild(1).transform.Translate(new Vector3(0.0025f, 0, 0));
+                doors[lastPress - 1].transform.GetChild(1).transform.localPosition = doors[lastPress - 1].transform.GetChild(1).transform.localPosition + new Vector3(0.0025f, 0, 0);
             }
 
             yield return new WaitForSeconds(0.05f);
@@ -551,13 +551,13 @@ public class graphicMemoryScript : MonoBehaviour
         for (int i = 0; i < 10; i++)
         {
             if (i < 5)
-                btns[lastPress - 1].transform.Translate(new Vector3(0f, 0f, -0.0032f));
+                btns[lastPress - 1].transform.localPosition = btns[lastPress - 1].transform.localPosition + new Vector3(0f, -0.0032f, 0f);
 
             if (i > 4)
             {
-                doors[lastPress - 1].transform.GetChild(1).transform.Translate(new Vector3(-0.0025f, 0, 0));
+                doors[lastPress - 1].transform.GetChild(1).transform.localPosition = doors[lastPress - 1].transform.GetChild(1).transform.localPosition + new Vector3(-0.0025f, 0, 0);
                 doors[lastPress - 1].transform.GetChild(1).transform.localScale += new Vector3(0.0006f, 0, 0);
-                doors[lastPress - 1].transform.GetChild(0).transform.Translate(new Vector3(0.0025f, 0, 0));
+                doors[lastPress - 1].transform.GetChild(0).transform.localPosition = doors[lastPress - 1].transform.GetChild(0).transform.localPosition + new Vector3(0.0025f, 0, 0);
                 doors[lastPress - 1].transform.GetChild(0).transform.localScale += new Vector3(0.0006f, 0, 0);
             }
 
