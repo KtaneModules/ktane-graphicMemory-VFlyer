@@ -102,6 +102,13 @@ public class graphicMemoryScript : MonoBehaviour
         labelShapes.Add(new List<KeyValuePair<string, int>>());
 
         btnPressesRequired = rnd.Range(4, 8);
+
+        foreach(KMSelectable btn in btns)
+            for(int i = 0; i < btn.transform.childCount; i++)
+                for(int j = 0; j < btn.transform.GetChild(i).childCount; j++)
+                    if(btn.transform.GetChild(i).transform.GetChild(j).name.Contains('r'))
+                        btn.transform.GetChild(i).transform.GetChild(j).localScale = new Vector3(btn.transform.GetChild(i).transform.GetChild(j).localScale.x / 0.1f, 1f, btn.transform.GetChild(i).transform.GetChild(j).localScale.z / 0.1f);
+    
     }
 
     void RandomizeButton(int btn)
