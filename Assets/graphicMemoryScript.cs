@@ -42,7 +42,7 @@ public class graphicMemoryScript : MonoBehaviour
 
     static int moduleIdCounter = 1;
     int moduleId;
-    private bool moduleSolved = false;
+    private bool moduleSolved = false, requestForceSolve = false;
 
     void Awake()
     {
@@ -53,14 +53,15 @@ public class graphicMemoryScript : MonoBehaviour
         btns[2].OnInteract += delegate () { PressButton(3); return false; };
         btns[3].OnInteract += delegate () { PressButton(4); return false; };
 
-        GetComponent<KMBombModule>().OnActivate += delegate { StartCoroutine("ButtonsAppear"); };
+        GetComponent<KMBombModule>().OnActivate += delegate { StartCoroutine(ButtonsAppear()); };
 
     }
 
     void Start()
     {
         SetUp();
-        RandomizeButtons();
+        RandomizeAllButtons();
+        Debug.LogFormat("[Graphic Memory #{0}] Press any button to start disarming the module.", moduleId);
     }
 
     void Update()
@@ -86,7 +87,10 @@ public class graphicMemoryScript : MonoBehaviour
                                         new int[] {0, 0, 0, 0, 0, 0} };
         dominantShapeCount = 0;
 
-        RandomizeButtons();
+        btnPressesRequired = rnd.Range(3, 6);
+
+        RandomizeAllButtons();
+        Debug.LogFormat("[Graphic Memory #{0}] Press any button to start disarming the module.", moduleId);
     }
 
     void SetUp()
@@ -101,14 +105,13 @@ public class graphicMemoryScript : MonoBehaviour
         labelShapes.Add(new List<KeyValuePair<string, int>>());
         labelShapes.Add(new List<KeyValuePair<string, int>>());
 
-        btnPressesRequired = rnd.Range(4, 8);
+        btnPressesRequired = rnd.Range(3, 6);
 
         foreach(KMSelectable btn in btns)
             for(int i = 0; i < btn.transform.childCount; i++)
                 for(int j = 0; j < btn.transform.GetChild(i).childCount; j++)
                     if(btn.transform.GetChild(i).transform.GetChild(j).name.Contains('r'))
                         btn.transform.GetChild(i).transform.GetChild(j).localScale = new Vector3(btn.transform.GetChild(i).transform.GetChild(j).localScale.x / 0.1f, 1f, btn.transform.GetChild(i).transform.GetChild(j).localScale.z / 0.1f);
-    
     }
 
     void RandomizeButton(int btn)
@@ -136,7 +139,7 @@ public class graphicMemoryScript : MonoBehaviour
         }
     }
 
-    void RandomizeButtons()
+    void RandomizeAllButtons()
     {
         int lblCnt = 1;
         foreach (KMSelectable btn in btns)
@@ -154,22 +157,24 @@ public class graphicMemoryScript : MonoBehaviour
         GetComponent<KMAudio>().PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
         btns[btn - 1].AddInteractionPunch();
 
-        if (!correctButtons.Exists(x => x == btn))
+        if (!correctButtons.Exists(x => x == btn) && btnPresses > 0)
         {
-            Debug.LogFormat("[Graphic Memory #{0}] Strike! Tried to press the button in the {1}when the correct buttons were [{2}].", moduleId, BtnToString(new List<int>(new int[] { btn })), BtnToString(correctButtons));
+            Debug.LogFormat("[Graphic Memory #{0}] Strike! The {1}button was incorrectly pressed when the valid buttons were [ {2}].", moduleId, BtnToString(new List<int>(new int[] { btn })), BtnToString(correctButtons));
 
             GetComponent<KMBombModule>().HandleStrike();
             animating = true;
-            StartCoroutine("ButtonsOnStrike");
+            StartCoroutine(ButtonsOnStrike());
         }
         else
         {
             btnPresses++;
-            Debug.LogFormat("[Graphic Memory #{0}] Successfully pressed the button in the {1}. {2} out of {3} button presses made.", moduleId, BtnToString(new List<int>(new int[] { btn })), btnPresses, btnPressesRequired);
-
-            if (btnPresses == btnPressesRequired)
+            if (btnPresses > 1)
+                Debug.LogFormat("[Graphic Memory #{0}] Correctly pressed the {1}button. {2} out of {3} button presses made.", moduleId, BtnToString(new List<int>(new int[] { btn })), btnPresses, btnPressesRequired);
+            else
+                Debug.LogFormat("[Graphic Memory #{0}] Pressed the {1}button. {2} out of {3} button presses made.", moduleId, BtnToString(new List<int>(new int[] { btn })), btnPresses, btnPressesRequired);
+            if (btnPresses >= btnPressesRequired)
             {
-                StartCoroutine("ButtonsDisappear");
+                StartCoroutine(ButtonsDisappear());
                 moduleSolved = true;
                 GetComponent<KMBombModule>().HandlePass();
             }
@@ -180,7 +185,7 @@ public class graphicMemoryScript : MonoBehaviour
                 CalcStatements();
                 CalCorrectButtons();
                 animating = true;
-                StartCoroutine("ButtonOnPress");
+                StartCoroutine(ButtonOnPress());
             }
         }
     }
@@ -221,6 +226,34 @@ public class graphicMemoryScript : MonoBehaviour
 
     void CalcStatements()
     {
+        statements = new bool[][]
+        {
+            new bool[] {
+                FindMax(positionCount) == 1 ? true : false,
+                FindMaxMatrix(colorShapeCount).SequenceEqual(new int[] { 0, 5 }) ? true : false,
+                dominantShapeCount > 0 ? true : false,
+                AllEqual(colorCount) ? true : false
+            },
+            new bool[] {
+                FindMax(positionCount) == 2 ? true : false,
+                shapeCount[0] > shapeCount[1] ? true : false,
+                (colorCount[1] + colorCount[2] + colorCount[3]) > (colorCount[0] + colorCount[4] + colorCount[5]) ? true : false,
+                FindMaxMatrix(colorShapeCount).SequenceEqual(new int[] { 0, 3 }) ? true : false
+            },
+            new bool[] {
+                FindMax(positionCount) == 3 ? true : false,
+                FindMaxMatrix(colorShapeCount).SequenceEqual(new int[] { 1, 0 }) ? true : false,
+                statements[2][2] = dominantShapeCount < 0 ? true : false,
+                statements[2][3] = shapeCount[0] == shapeCount[1] ? true : false
+            },
+            new bool[] {
+                FindMax(positionCount) == 0 ? true : false,
+                shapeCount[0] < shapeCount[1] ? true : false,
+                (colorCount[1] + colorCount[2] + colorCount[3]) < (colorCount[0] + colorCount[4] + colorCount[5]) ? true : false,
+                FindMaxMatrix(colorShapeCount).SequenceEqual(new int[] { 1, 1 }) ? true : false
+            },
+        };
+        /*
         statements[0][0] = FindMax(positionCount) == 1 ? true : false;
         statements[0][1] = FindMaxMatrix(colorShapeCount).SequenceEqual(new int[] { 0, 5 }) ? true : false;
         statements[0][2] = dominantShapeCount > 0 ? true : false;
@@ -240,11 +273,21 @@ public class graphicMemoryScript : MonoBehaviour
         statements[3][1] = shapeCount[0] < shapeCount[1] ? true : false;
         statements[3][2] = (colorCount[1] + colorCount[2] + colorCount[3]) < (colorCount[0] + colorCount[4] + colorCount[5]) ? true : false;
         statements[3][3] = FindMaxMatrix(colorShapeCount).SequenceEqual(new int[] { 1, 1 }) ? true : false;
+        */
+        for (int x = 0; x < 4; x++)
+        {
+            int[] trueStatements = new[] { 0, 1, 2, 3 }.Where(a => statements[x][a]).ToArray();
 
+            Debug.LogFormat("[Graphic Memory #{0}] True Statements for the {1}button: [ {2} ]", moduleId,
+                BtnToString(new List<int>(new int[] { x + 1 })),
+                trueStatements.Any() ? trueStatements.Select(a => a + 1).Join(", ") : "none");
+        }
+        /*
         Debug.LogFormat("[Graphic Memory #{0}] Statements for the button in the {1}are {2}, {3}, {4} and {5}", moduleId, BtnToString(new List<int>(new int[] { 1 })), statements[0][0], statements[0][1], statements[0][2], statements[0][3]);
         Debug.LogFormat("[Graphic Memory #{0}] Statements for the button in the {1}are {2}, {3}, {4} and {5}", moduleId, BtnToString(new List<int>(new int[] { 2 })), statements[1][0], statements[1][1], statements[1][2], statements[1][3]);
         Debug.LogFormat("[Graphic Memory #{0}] Statements for the button in the {1}are {2}, {3}, {4} and {5}", moduleId, BtnToString(new List<int>(new int[] { 3 })), statements[2][0], statements[2][1], statements[2][2], statements[2][3]);
         Debug.LogFormat("[Graphic Memory #{0}] Statements for the button in the {1}are {2}, {3}, {4} and {5}", moduleId, BtnToString(new List<int>(new int[] { 4 })), statements[3][0], statements[3][1], statements[3][2], statements[3][3]);
+        */
     }
 
     void CalCorrectButtons()
@@ -279,6 +322,7 @@ public class graphicMemoryScript : MonoBehaviour
                 correctButtons.Add(i + 1);
             }
         }
+        Debug.LogFormat("[Graphic Memory #{0}] Valid buttons after {2} press(es): [ {1}].", moduleId, BtnToString(correctButtons), btnPresses);
     }
 
     int FindMax(int[] a)
@@ -452,7 +496,7 @@ public class graphicMemoryScript : MonoBehaviour
                 }
             }
 
-            yield return new WaitForSeconds(0.05f);
+            yield return new WaitForSeconds(requestForceSolve ? 0f : 0.05f);
         }
 
         sound.StopSound();
@@ -493,7 +537,7 @@ public class graphicMemoryScript : MonoBehaviour
                 }
             }
 
-            yield return new WaitForSeconds(0.05f);
+            yield return new WaitForSeconds(requestForceSolve ? 0f : 0.05f);
         }
 
         sound.StopSound();
@@ -501,24 +545,24 @@ public class graphicMemoryScript : MonoBehaviour
 
     IEnumerator ButtonsOnStrike()
     {
-        yield return StartCoroutine("ButtonsDisappear");
+        yield return ButtonsDisappear();
 
         Reset();
 
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(requestForceSolve ? 0f : 0.5f);
 
-        yield return StartCoroutine("ButtonsAppear");
+        yield return ButtonsAppear();
     }
 
     IEnumerator ButtonOnPress()
     {
-        yield return StartCoroutine("ButtonDisappear");
+        yield return ButtonDisappear();
 
         RandomizeButton(lastPress);
 
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(requestForceSolve ? 0f : 0.5f);
 
-        yield return StartCoroutine("ButtonAppear");
+        yield return ButtonAppear();
 
     }
 
@@ -539,7 +583,7 @@ public class graphicMemoryScript : MonoBehaviour
                 doors[lastPress - 1].transform.GetChild(1).transform.localPosition = doors[lastPress - 1].transform.GetChild(1).transform.localPosition + new Vector3(0.0025f, 0, 0);
             }
 
-            yield return new WaitForSeconds(0.05f);
+            yield return new WaitForSeconds(requestForceSolve ? 0f : 0.05f);
         }
 
         sound.StopSound();
@@ -568,41 +612,86 @@ public class graphicMemoryScript : MonoBehaviour
                 doors[lastPress - 1].transform.GetChild(0).transform.localScale += new Vector3(0.0006f, 0, 0);
             }
 
-            yield return new WaitForSeconds(0.05f);
+            yield return new WaitForSeconds(requestForceSolve ? 0f : 0.05f);
         }
 
         sound.StopSound();
     }
+    IEnumerator TwitchHandleForcedSolve()
+    {
+        requestForceSolve = true;
+        Debug.LogFormat("[Graphic Memory #{0}] Force solve requested viva TP Handler.", moduleId);
+        while (btnPresses < btnPressesRequired)
+        {
+            while (animating)
+                yield return true;
+            if (correctButtons.Any())
+            {
+                btns[correctButtons[rnd.Range(0, correctButtons.Count)] - 1].OnInteract();
+                yield return null;
+            }
+            else
+                yield break;
 
-    //twitch plays
+        }
+
+        yield return null;
+    }
+
+    //Twitch Plays Handling
     #pragma warning disable 414
-    private readonly string TwitchHelpMessage = @"!{0} <button> [Presses the specified button] | Valid buttons are TL(topleft), TR(topright), BL(bottomleft), and BR(bottomright)";
+    private readonly string TwitchHelpMessage = "Press the specified button with \"!{0} TL/top-right/bl/Bottom right\" Valid buttons are TL(topleft), TR(topright), BL(bottomleft), and BR(bottomright). \"press\" is optional. Reset the module with \"!{0} reset\". At least 1 button must be pressed in order to reset the module!";
     #pragma warning restore 414
     IEnumerator ProcessTwitchCommand(string command)
     {
-        if (Regex.IsMatch(command, @"^\s*TL\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+        if (Application.isEditor)
+            command = command.Trim();
+
+        if (Regex.IsMatch(command, @"^(press\s)?(TL|top(-|\s)left|topleft)\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
         {
             yield return null;
+            do
+                yield return "trycancel";
+            while (animating);
             btns[2].OnInteract();
-            yield break;
         }
-        if (Regex.IsMatch(command, @"^\s*TR\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+        else if (Regex.IsMatch(command, @"^(press\s)?(TR|top(-|\s)right|topright)\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
         {
             yield return null;
+            do
+                yield return "trycancel";
+            while (animating);
             btns[3].OnInteract();
-            yield break;
         }
-        if (Regex.IsMatch(command, @"^\s*BL\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+        else if (Regex.IsMatch(command, @"^(press\s)?(BL|bottom(-|\s)left|bottomleft)\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
         {
             yield return null;
+            do
+                yield return "trycancel";
+            while (animating);
             btns[0].OnInteract();
-            yield break;
         }
-        if (Regex.IsMatch(command, @"^\s*BR\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+        else if (Regex.IsMatch(command, @"^(press\s)?(BR|bottom(-|\s)right|bottomright)\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
         {
             yield return null;
+            do
+                yield return "trycancel";
+            while (animating);
             btns[1].OnInteract();
-            yield break;
+        }
+        else if (Regex.IsMatch(command, @"^\s*reset\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+        {
+            if (btnPresses <= 0)
+            {
+                yield return "sendtochaterror You must press at least 1 button in order to reset the module.";
+                yield break;
+            }
+            yield return null;
+            do
+                yield return "trycancel";
+            while (animating);
+            Debug.LogFormat("[Graphic Memory #{0}] Requesting reset viva TP Handler.", moduleId);
+            StartCoroutine(ButtonsOnStrike());
         }
     }
 }
