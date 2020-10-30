@@ -87,7 +87,6 @@ public class graphicMemoryScript : MonoBehaviour
                                         new int[] {0, 0, 0, 0, 0, 0} };
         dominantShapeCount = 0;
 
-        btnPressesRequired = rnd.Range(3, 6);
 
         RandomizeAllButtons();
         Debug.LogFormat("[Graphic Memory #{0}] Press any button to start disarming the module.", moduleId);
@@ -105,7 +104,7 @@ public class graphicMemoryScript : MonoBehaviour
         labelShapes.Add(new List<KeyValuePair<string, int>>());
         labelShapes.Add(new List<KeyValuePair<string, int>>());
 
-        btnPressesRequired = rnd.Range(3, 6);
+        btnPressesRequired = 4;
 
         foreach(KMSelectable btn in btns)
             for(int i = 0; i < btn.transform.childCount; i++)
