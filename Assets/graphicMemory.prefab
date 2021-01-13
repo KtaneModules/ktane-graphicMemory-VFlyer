@@ -4630,7 +4630,6 @@ GameObject:
   m_Component:
   - component: {fileID: 4543145958505966}
   - component: {fileID: 114614747596665788}
-  - component: {fileID: 114382315774619326}
   - component: {fileID: 114682943674607128}
   - component: {fileID: 114106750372550374}
   - component: {fileID: 114189083327926310}
@@ -18065,8 +18064,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be963ec353ab9e14d9e0a374a5eb7994, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bomb: {fileID: 114382315774619326}
-  Audio: {fileID: 114614747596665788}
+  MAudio: {fileID: 114614747596665788}
+  modSelf: {fileID: 114682943674607128}
   colors:
   - {fileID: 2100000, guid: 1862578a98ab50943bc19bcf649545e4, type: 2}
   - {fileID: 2100000, guid: cde4517d97772ab4bb2c480a97c5faea, type: 2}
@@ -18137,17 +18136,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShaderNames:
   - KT/Mobile/DiffuseTint
---- !u!114 &114382315774619326
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1920246982271190}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 2144496390, guid: 45b809be76fd7a3468b6f517bced6f28, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &114420129432856644
 MonoBehaviour:
   m_ObjectHideFlags: 1

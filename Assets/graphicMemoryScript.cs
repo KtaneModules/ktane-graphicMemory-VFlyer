@@ -1,16 +1,14 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using KModkit;
 using System.Text.RegularExpressions;
 using rnd = UnityEngine.Random;
 
 public class graphicMemoryScript : MonoBehaviour
 {
-    public KMBombInfo bomb;
-    public KMAudio Audio;
+    public KMAudio MAudio;
+    public KMBombModule modSelf;
 
     public Material[] colors;
     public Material black;
@@ -41,20 +39,50 @@ public class graphicMemoryScript : MonoBehaviour
     bool animating = true;
 
     static int moduleIdCounter = 1;
-    int moduleId;
+    int moduleId, minPressRequested = 4, maxPressRequested = 4;
     private bool moduleSolved = false, requestForceSolve = false;
 
+    private GraphicMemorySettings GMSettings;
     void Awake()
     {
         moduleId = moduleIdCounter++;
 
+        for (var x = 0; x < btns.Length; x++)
+        {
+            var y = x;
+            btns[x].OnInteract += delegate { PressButton(y + 1); return false; };
+        }
+        /*
         btns[0].OnInteract += delegate () { PressButton(1); return false; };
         btns[1].OnInteract += delegate () { PressButton(2); return false; };
         btns[2].OnInteract += delegate () { PressButton(3); return false; };
         btns[3].OnInteract += delegate () { PressButton(4); return false; };
+        */
+        modSelf.OnActivate += delegate { StartCoroutine(ButtonsAppear()); };
+        try
+        {
+            var fileGMSettings = new ModConfig<GraphicMemorySettings>("GraphicMemorySettings");
+            GMSettings = fileGMSettings.Settings;
+            fileGMSettings.Settings = GMSettings;
 
-        GetComponent<KMBombModule>().OnActivate += delegate { StartCoroutine(ButtonsAppear()); };
-
+            minPressRequested = Mathf.Max(3, GMSettings.minPressesRequired);
+            maxPressRequested = Mathf.Min(7, GMSettings.maxPressesRequired);
+        }
+        catch
+        {
+            Debug.LogWarningFormat("<Graphic Memory #{0}> Settings do not work as intended! Using default settings instead.", moduleId);
+            minPressRequested = 4;
+            maxPressRequested = 4;
+        }
+        finally
+        {
+            if (minPressRequested > maxPressRequested)
+            {
+                var temp = minPressRequested;
+                minPressRequested = maxPressRequested;
+                maxPressRequested = temp;
+            }
+        }
     }
 
     void Start()
@@ -104,7 +132,7 @@ public class graphicMemoryScript : MonoBehaviour
         labelShapes.Add(new List<KeyValuePair<string, int>>());
         labelShapes.Add(new List<KeyValuePair<string, int>>());
 
-        btnPressesRequired = 4;
+        btnPressesRequired = rnd.Range(minPressRequested, maxPressRequested + 1);
 
         foreach(KMSelectable btn in btns)
             for(int i = 0; i < btn.transform.childCount; i++)
@@ -153,14 +181,14 @@ public class graphicMemoryScript : MonoBehaviour
         if (animating || moduleSolved)
             return;
 
-        GetComponent<KMAudio>().PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
+        MAudio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
         btns[btn - 1].AddInteractionPunch();
 
         if (!correctButtons.Exists(x => x == btn) && btnPresses > 0)
         {
             Debug.LogFormat("[Graphic Memory #{0}] Strike! The {1}button was incorrectly pressed when the valid buttons were [ {2}].", moduleId, BtnToString(new List<int>(new int[] { btn })), BtnToString(correctButtons));
 
-            GetComponent<KMBombModule>().HandleStrike();
+            modSelf.HandleStrike();
             animating = true;
             StartCoroutine(ButtonsOnStrike());
         }
@@ -175,7 +203,7 @@ public class graphicMemoryScript : MonoBehaviour
             {
                 StartCoroutine(ButtonsDisappear());
                 moduleSolved = true;
-                GetComponent<KMBombModule>().HandlePass();
+                modSelf.HandlePass();
             }
             else
             {
@@ -474,7 +502,7 @@ public class graphicMemoryScript : MonoBehaviour
 
     IEnumerator ButtonsAppear()
     {
-        KMAudio.KMAudioRef sound = GetComponent<KMAudio>().PlayGameSoundAtTransformWithRef(KMSoundOverride.SoundEffect.WireSequenceMechanism, transform);
+        KMAudio.KMAudioRef sound = MAudio.PlayGameSoundAtTransformWithRef(KMSoundOverride.SoundEffect.WireSequenceMechanism, transform);
 
         for (int i = 0; i < 10; i++)
         {
@@ -497,8 +525,8 @@ public class graphicMemoryScript : MonoBehaviour
 
             yield return new WaitForSeconds(requestForceSolve ? 0f : 0.05f);
         }
-
-        sound.StopSound();
+        if (sound != null)
+            sound.StopSound();
 
         foreach (KMSelectable btn in btns)
         {
@@ -510,7 +538,7 @@ public class graphicMemoryScript : MonoBehaviour
 
     IEnumerator ButtonsDisappear()
     {
-        KMAudio.KMAudioRef sound = GetComponent<KMAudio>().PlayGameSoundAtTransformWithRef(KMSoundOverride.SoundEffect.WireSequenceMechanism, transform);
+        KMAudio.KMAudioRef sound = MAudio.PlayGameSoundAtTransformWithRef(KMSoundOverride.SoundEffect.WireSequenceMechanism, transform);
 
         foreach (KMSelectable btn in btns)
         {
@@ -536,7 +564,7 @@ public class graphicMemoryScript : MonoBehaviour
                 }
             }
 
-            yield return new WaitForSeconds(requestForceSolve ? 0f : 0.05f);
+            yield return new WaitForSeconds(0.05f);
         }
 
         sound.StopSound();
@@ -548,7 +576,7 @@ public class graphicMemoryScript : MonoBehaviour
 
         Reset();
 
-        yield return new WaitForSeconds(requestForceSolve ? 0f : 0.5f);
+        yield return new WaitForSeconds(0.5f);
 
         yield return ButtonsAppear();
     }
@@ -559,7 +587,7 @@ public class graphicMemoryScript : MonoBehaviour
 
         RandomizeButton(lastPress);
 
-        yield return new WaitForSeconds(requestForceSolve ? 0f : 0.5f);
+        yield return new WaitForSeconds(0.5f);
 
         yield return ButtonAppear();
 
@@ -567,7 +595,7 @@ public class graphicMemoryScript : MonoBehaviour
 
     IEnumerator ButtonAppear()
     {
-        KMAudio.KMAudioRef sound = GetComponent<KMAudio>().PlayGameSoundAtTransformWithRef(KMSoundOverride.SoundEffect.WireSequenceMechanism, transform);
+        KMAudio.KMAudioRef sound = MAudio.PlayGameSoundAtTransformWithRef(KMSoundOverride.SoundEffect.WireSequenceMechanism, transform);
 
         for (int i = 0; i < 10; i++)
         {
@@ -582,10 +610,10 @@ public class graphicMemoryScript : MonoBehaviour
                 doors[lastPress - 1].transform.GetChild(1).transform.localPosition = doors[lastPress - 1].transform.GetChild(1).transform.localPosition + new Vector3(0.0025f, 0, 0);
             }
 
-            yield return new WaitForSeconds(requestForceSolve ? 0f : 0.05f);
+            yield return new WaitForSeconds(0.05f);
         }
-
-        sound.StopSound();
+        if (sound != null)
+            sound.StopSound();
 
         btns[lastPress - 1].transform.GetChild(7).gameObject.SetActive(true);
 
@@ -594,7 +622,8 @@ public class graphicMemoryScript : MonoBehaviour
 
     IEnumerator ButtonDisappear()
     {
-        KMAudio.KMAudioRef sound = GetComponent<KMAudio>().PlayGameSoundAtTransformWithRef(KMSoundOverride.SoundEffect.WireSequenceMechanism, transform);
+
+        KMAudio.KMAudioRef sound = MAudio.PlayGameSoundAtTransformWithRef(KMSoundOverride.SoundEffect.WireSequenceMechanism, transform);
 
         btns[lastPress - 1].transform.GetChild(7).gameObject.SetActive(false);
 
@@ -611,11 +640,19 @@ public class graphicMemoryScript : MonoBehaviour
                 doors[lastPress - 1].transform.GetChild(0).transform.localScale += new Vector3(0.0006f, 0, 0);
             }
 
-            yield return new WaitForSeconds(requestForceSolve ? 0f : 0.05f);
+            yield return new WaitForSeconds(0.05f);
         }
-
-        sound.StopSound();
+        if (sound != null)
+            sound.StopSound();
     }
+
+    public class GraphicMemorySettings
+    {
+        public int minPressesRequired = 4;
+        public int maxPressesRequired = 4;
+    }
+
+    //Twitch Plays Handling
     IEnumerator TwitchHandleForcedSolve()
     {
         requestForceSolve = true;
@@ -636,8 +673,6 @@ public class graphicMemoryScript : MonoBehaviour
 
         yield return null;
     }
-
-    //Twitch Plays Handling
     #pragma warning disable 414
     private readonly string TwitchHelpMessage = "Press the specified button with \"!{0} TL/top-right/bl/Bottom right\" Valid buttons are TL(topleft), TR(topright), BL(bottomleft), and BR(bottomright). \"press\" is optional. Reset the module with \"!{0} reset\". At least 1 button must be pressed in order to reset the module!";
     #pragma warning restore 414
