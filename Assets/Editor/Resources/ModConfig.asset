@@ -14,12 +14,12 @@ MonoBehaviour:
   id: graphicMemory
   title: Graphic Memory [REUPLOAD]
   description: "It's only colors and shapes... How hard can it be?\r\n\r\n[b]This
-    is a reupload of the original module by the original author with the nerfs intact.
-    Please unsubscribe/disable the old version [url=https://steamcommunity.com/sharedfiles/filedetails/?id=1664295908]here.[/url][/b]\n\nModule
+    is a reupload of the original module by the original author with some changes
+    intact. Please unsubscribe/disable the old version [url=https://steamcommunity.com/sharedfiles/filedetails/?id=1664295908]here.[/url][/b]\n\nModule
     originally by TheThirdMan\nReuploaded and maintained by VFlyer\nmoduleID: graphicMemory\r\n\r\nGitHub
     Repository (Legacy Version): https://github.com/luisdiogo98/ktane-graphicMemory\r\nGitHub
     Repository (Reupload): https://github.com/VFlyer/ktane-graphicMemory\r\n\r\nManual
     HTML: https://ktane.timwi.de/HTML/Graphic%20Memory.html\r\nManual PDF: https://ktane.timwi.de/PDF/Graphic%20Memory.pdf\r\n"
-  version: 1.6
+  version: 1.6.02
   outputFolder: build
   previewImage: {fileID: 2800000, guid: 02137f98354d5014e8e2fb0555edfacc, type: 3}

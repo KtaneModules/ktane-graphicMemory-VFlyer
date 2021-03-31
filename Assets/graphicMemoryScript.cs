@@ -38,7 +38,7 @@ public class graphicMemoryScript : MonoBehaviour
 
     bool animating = true;
 
-    static int moduleIdCounter = 1;
+    static int moduleIdCounter = 1, soundsPlayed = 0;
     int moduleId, minPressRequested = 4, maxPressRequested = 4;
     private bool moduleSolved = false, requestForceSolve = false;
 
@@ -66,7 +66,7 @@ public class graphicMemoryScript : MonoBehaviour
             fileGMSettings.Settings = GMSettings;
 
             minPressRequested = Mathf.Max(3, GMSettings.minPressesRequired);
-            maxPressRequested = Mathf.Min(7, GMSettings.maxPressesRequired);
+            maxPressRequested = Mathf.Max(3, Mathf.Min(7, GMSettings.maxPressesRequired));
         }
         catch
         {
@@ -82,6 +82,7 @@ public class graphicMemoryScript : MonoBehaviour
                 minPressRequested = maxPressRequested;
                 maxPressRequested = temp;
             }
+            Debug.LogFormat("<Graphic Memory #{0}> Required number of presses to disarm the module: {1} - {2}", moduleId, minPressRequested, maxPressRequested);
         }
     }
 
@@ -90,11 +91,6 @@ public class graphicMemoryScript : MonoBehaviour
         SetUp();
         RandomizeAllButtons();
         Debug.LogFormat("[Graphic Memory #{0}] Press any button to start disarming the module.", moduleId);
-    }
-
-    void Update()
-    {
-
     }
 
     void Reset()
@@ -155,6 +151,8 @@ public class graphicMemoryScript : MonoBehaviour
         label.gameObject.SetActive(true);
         labelShapes[btn - 1].Clear();
 
+        var allShapes = new List<string[]>();
+
         for (int i = 0; i < label.childCount; i++)
         {
             int colorIdx = rnd.Range(0, 6);
@@ -162,8 +160,21 @@ public class graphicMemoryScript : MonoBehaviour
 
             labelShapes[btn - 1].Add(new KeyValuePair<string, int>(label.GetChild(i).name, colorIdx));
 
-            Debug.LogFormat("[Graphic Memory #{0}] {1}button has now a {2} {3}.", moduleId, BtnToString(new List<int>(new int[] { btn })), ColorToString(colorIdx), ShapeToString(label.GetChild(i).name));
+            allShapes.Add(new[] { ColorToString(colorIdx), ShapeToString(label.GetChild(i).name) });
+
+            //Debug.LogFormat("[Graphic Memory #{0}] The {1}button has now a {2} {3}.", moduleId, BtnToString(btn), ColorToString(colorIdx), ShapeToString(label.GetChild(i).name));
         }
+        var allDistinctShapes = new List<string[]>();
+        foreach (string[] shapecombo in allShapes)
+        {
+            if (!allDistinctShapes.Any(a => shapecombo.SequenceEqual(a)))
+            {
+                allDistinctShapes.Add(shapecombo);
+            }
+        }
+
+        Debug.LogFormat("[Graphic Memory #{0}] The {1}button now has the following shapes: {2}.", moduleId, BtnToString(btn),
+            allDistinctShapes.Select(a => allShapes.Count(b => a.SequenceEqual(b)).ToString() + " " + a.Join() + (allShapes.Count(b => a.SequenceEqual(b)) == 1 ? "" : "s")).Join(", "));
     }
 
     void RandomizeAllButtons()
@@ -186,7 +197,7 @@ public class graphicMemoryScript : MonoBehaviour
 
         if (!correctButtons.Exists(x => x == btn) && btnPresses > 0)
         {
-            Debug.LogFormat("[Graphic Memory #{0}] Strike! The {1}button was incorrectly pressed when the valid buttons were [ {2}].", moduleId, BtnToString(new List<int>(new int[] { btn })), BtnToString(correctButtons));
+            Debug.LogFormat("[Graphic Memory #{0}] Strike! The {1}button was incorrectly pressed when the valid buttons were [ {2}].", moduleId, BtnToString(btn), BtnToString(correctButtons.ToArray()));
 
             modSelf.HandleStrike();
             animating = true;
@@ -196,9 +207,9 @@ public class graphicMemoryScript : MonoBehaviour
         {
             btnPresses++;
             if (btnPresses > 1)
-                Debug.LogFormat("[Graphic Memory #{0}] Correctly pressed the {1}button. {2} out of {3} button presses made.", moduleId, BtnToString(new List<int>(new int[] { btn })), btnPresses, btnPressesRequired);
+                Debug.LogFormat("[Graphic Memory #{0}] Correctly pressed the {1}button. {2} out of {3} button presses made.", moduleId, BtnToString(btn), btnPresses, btnPressesRequired);
             else
-                Debug.LogFormat("[Graphic Memory #{0}] Pressed the {1}button. {2} out of {3} button presses made.", moduleId, BtnToString(new List<int>(new int[] { btn })), btnPresses, btnPressesRequired);
+                Debug.LogFormat("[Graphic Memory #{0}] Pressed the {1}button. {2} out of {3} button presses made.", moduleId, BtnToString(btn), btnPresses, btnPressesRequired);
             if (btnPresses >= btnPressesRequired)
             {
                 StartCoroutine(ButtonsDisappear());
@@ -306,7 +317,7 @@ public class graphicMemoryScript : MonoBehaviour
             int[] trueStatements = new[] { 0, 1, 2, 3 }.Where(a => statements[x][a]).ToArray();
 
             Debug.LogFormat("[Graphic Memory #{0}] True Statements for the {1}button: [ {2} ]", moduleId,
-                BtnToString(new List<int>(new int[] { x + 1 })),
+                BtnToString(x + 1),
                 trueStatements.Any() ? trueStatements.Select(a => a + 1).Join(", ") : "none");
         }
         /*
@@ -349,7 +360,7 @@ public class graphicMemoryScript : MonoBehaviour
                 correctButtons.Add(i + 1);
             }
         }
-        Debug.LogFormat("[Graphic Memory #{0}] Valid buttons after {2} press(es): [ {1}].", moduleId, BtnToString(correctButtons), btnPresses);
+        Debug.LogFormat("[Graphic Memory #{0}] Valid buttons after {2} press(es): [ {1} ].", moduleId, BtnToString(correctButtons.ToArray()), btnPresses);
     }
 
     int FindMax(int[] a)
@@ -425,7 +436,7 @@ public class graphicMemoryScript : MonoBehaviour
         return true;
     }
 
-    string BtnToString(List<int> btns)
+    string BtnToString(params int[] btns)
     {
         string ret = "";
 
@@ -500,10 +511,21 @@ public class graphicMemoryScript : MonoBehaviour
         return null;
     }
 
+    IEnumerator DelayResetCounter()
+    {
+        yield return null;
+        soundsPlayed = 0;
+    }
+
     IEnumerator ButtonsAppear()
     {
-        KMAudio.KMAudioRef sound = MAudio.PlayGameSoundAtTransformWithRef(KMSoundOverride.SoundEffect.WireSequenceMechanism, transform);
-
+        //KMAudio.KMAudioRef sound = MAudio.PlayGameSoundAtTransformWithRef(KMSoundOverride.SoundEffect.WireSequenceMechanism, transform);
+        if (soundsPlayed == 0)
+        {
+            MAudio.PlaySoundAtTransform("wiresequence_startTrimmed", transform);
+            soundsPlayed++;
+            StartCoroutine(DelayResetCounter());
+        }
         for (int i = 0; i < 10; i++)
         {
             if (i > 4)
@@ -523,11 +545,12 @@ public class graphicMemoryScript : MonoBehaviour
                 }
             }
 
-            yield return new WaitForSeconds(requestForceSolve ? 0f : 0.05f);
+            yield return new WaitForSeconds(0.05f);
         }
+        /*
         if (sound != null)
             sound.StopSound();
-
+        */
         foreach (KMSelectable btn in btns)
         {
             btn.transform.GetChild(7).gameObject.SetActive(true);
@@ -538,8 +561,13 @@ public class graphicMemoryScript : MonoBehaviour
 
     IEnumerator ButtonsDisappear()
     {
-        KMAudio.KMAudioRef sound = MAudio.PlayGameSoundAtTransformWithRef(KMSoundOverride.SoundEffect.WireSequenceMechanism, transform);
-
+        //KMAudio.KMAudioRef sound = MAudio.PlayGameSoundAtTransformWithRef(KMSoundOverride.SoundEffect.WireSequenceMechanism, transform);
+        if (soundsPlayed == 0)
+        {
+            MAudio.PlaySoundAtTransform("wiresequence_startTrimmed", transform);
+            soundsPlayed++;
+            StartCoroutine(DelayResetCounter());
+        }
         foreach (KMSelectable btn in btns)
         {
             btn.transform.GetChild(7).gameObject.SetActive(false);
@@ -563,11 +591,12 @@ public class graphicMemoryScript : MonoBehaviour
                     door.transform.GetChild(0).transform.localScale += new Vector3(0.0006f, 0, 0);
                 }
             }
-
             yield return new WaitForSeconds(0.05f);
         }
-
-        sound.StopSound();
+        /*
+        if (sound != null)
+            sound.StopSound();
+        */
     }
 
     IEnumerator ButtonsOnStrike()
@@ -595,8 +624,13 @@ public class graphicMemoryScript : MonoBehaviour
 
     IEnumerator ButtonAppear()
     {
-        KMAudio.KMAudioRef sound = MAudio.PlayGameSoundAtTransformWithRef(KMSoundOverride.SoundEffect.WireSequenceMechanism, transform);
-
+        //KMAudio.KMAudioRef sound = MAudio.PlayGameSoundAtTransformWithRef(KMSoundOverride.SoundEffect.WireSequenceMechanism, transform);
+        if (soundsPlayed == 0)
+        {
+            MAudio.PlaySoundAtTransform("wiresequence_startTrimmed", transform);
+            soundsPlayed++;
+            StartCoroutine(DelayResetCounter());
+        }
         for (int i = 0; i < 10; i++)
         {
             if (i > 4)
@@ -612,9 +646,10 @@ public class graphicMemoryScript : MonoBehaviour
 
             yield return new WaitForSeconds(0.05f);
         }
+        /*
         if (sound != null)
             sound.StopSound();
-
+        */
         btns[lastPress - 1].transform.GetChild(7).gameObject.SetActive(true);
 
         animating = false;
@@ -623,8 +658,13 @@ public class graphicMemoryScript : MonoBehaviour
     IEnumerator ButtonDisappear()
     {
 
-        KMAudio.KMAudioRef sound = MAudio.PlayGameSoundAtTransformWithRef(KMSoundOverride.SoundEffect.WireSequenceMechanism, transform);
-
+        //KMAudio.KMAudioRef sound = MAudio.PlayGameSoundAtTransformWithRef(KMSoundOverride.SoundEffect.WireSequenceMechanism, transform);
+        if (soundsPlayed == 0)
+        {
+            MAudio.PlaySoundAtTransform("wiresequence_startTrimmed", transform);
+            soundsPlayed++;
+            StartCoroutine(DelayResetCounter());
+        }
         btns[lastPress - 1].transform.GetChild(7).gameObject.SetActive(false);
 
         for (int i = 0; i < 10; i++)
@@ -642,25 +682,40 @@ public class graphicMemoryScript : MonoBehaviour
 
             yield return new WaitForSeconds(0.05f);
         }
+        /*
         if (sound != null)
             sound.StopSound();
+        */
     }
 
     public class GraphicMemorySettings
     {
         public int minPressesRequired = 4;
         public int maxPressesRequired = 4;
+        public string version = "1.6.01";
     }
 
     //Twitch Plays Handling
     IEnumerator TwitchHandleForcedSolve()
     {
         requestForceSolve = true;
+        var timePassedSinceAnimation = System.Diagnostics.Stopwatch.StartNew();
         Debug.LogFormat("[Graphic Memory #{0}] Force solve requested viva TP Handler.", moduleId);
+        timePassedSinceAnimation.Start();
         while (btnPresses < btnPressesRequired)
         {
             while (animating)
+            {
                 yield return true;
+                if (timePassedSinceAnimation.Elapsed.TotalSeconds >= 30)
+                {
+                    Debug.LogWarningFormat("[Graphic Memory #{0}] Autosolve handler is taking longer than expected. Abandoning autosolve and bypassing solve checker. Be sure to send a log for this report.", moduleId);
+                    Debug.LogFormat("<Graphic Memory #{0}> Elapsed time reached/exceeded 30 seconds.", moduleId);
+                    yield return ButtonsDisappear();
+                    timePassedSinceAnimation.Stop();
+                    yield break;
+                }
+            }
             if (correctButtons.Any())
             {
                 btns[correctButtons[rnd.Range(0, correctButtons.Count)] - 1].OnInteract();
@@ -670,7 +725,8 @@ public class graphicMemoryScript : MonoBehaviour
                 yield break;
 
         }
-
+        Debug.LogFormat("<Graphic Memory #{0}> Elapsed time: {1} ms", moduleId, timePassedSinceAnimation.ElapsedMilliseconds);
+        timePassedSinceAnimation.Stop();
         yield return null;
     }
     #pragma warning disable 414
