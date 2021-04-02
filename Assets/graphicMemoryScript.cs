@@ -91,6 +91,8 @@ public class graphicMemoryScript : MonoBehaviour
         SetUp();
         RandomizeAllButtons();
         Debug.LogFormat("[Graphic Memory #{0}] Press any button to start disarming the module.", moduleId);
+        if (soundsPlayed > 0)
+            StartCoroutine(DelayResetCounter());
     }
 
     void Reset()
