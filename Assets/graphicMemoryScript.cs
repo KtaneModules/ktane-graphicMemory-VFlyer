@@ -4,6 +4,7 @@ using System.Linq;
 using UnityEngine;
 using System.Text.RegularExpressions;
 using rnd = UnityEngine.Random;
+using System;
 
 public class graphicMemoryScript : MonoBehaviour
 {
@@ -38,9 +39,9 @@ public class graphicMemoryScript : MonoBehaviour
 
     bool animating = true;
 
-    static int moduleIdCounter = 1, soundsPlayed = 0;
+    static int moduleIdCounter = 1;
     int moduleId, minPressRequested = 4, maxPressRequested = 4;
-    private bool moduleSolved = false, requestForceSolve = false;
+    private bool moduleSolved = false;
 
     private GraphicMemorySettings GMSettings;
     void Awake()
@@ -91,8 +92,6 @@ public class graphicMemoryScript : MonoBehaviour
         SetUp();
         RandomizeAllButtons();
         Debug.LogFormat("[Graphic Memory #{0}] Press any button to start disarming the module.", moduleId);
-        if (soundsPlayed > 0)
-            StartCoroutine(DelayResetCounter());
     }
 
     void Reset()
@@ -513,21 +512,9 @@ public class graphicMemoryScript : MonoBehaviour
         return null;
     }
 
-    IEnumerator DelayResetCounter()
-    {
-        yield return null;
-        soundsPlayed = 0;
-    }
-
     IEnumerator ButtonsAppear()
     {
-        //KMAudio.KMAudioRef sound = MAudio.PlayGameSoundAtTransformWithRef(KMSoundOverride.SoundEffect.WireSequenceMechanism, transform);
-        if (soundsPlayed == 0)
-        {
-            MAudio.PlaySoundAtTransform("wiresequence_startTrimmed", transform);
-            soundsPlayed++;
-            StartCoroutine(DelayResetCounter());
-        }
+        KMAudio.KMAudioRef sound = MAudio.PlayGameSoundAtTransformWithRef(KMSoundOverride.SoundEffect.WireSequenceMechanism, transform);
         for (int i = 0; i < 10; i++)
         {
             if (i > 4)
@@ -549,10 +536,11 @@ public class graphicMemoryScript : MonoBehaviour
 
             yield return new WaitForSeconds(0.05f);
         }
-        /*
-        if (sound != null)
-            sound.StopSound();
-        */
+        try
+        {
+            if (sound != null)
+                sound.StopSound();
+        } catch (NullReferenceException) { }
         foreach (KMSelectable btn in btns)
         {
             btn.transform.GetChild(7).gameObject.SetActive(true);
@@ -563,13 +551,7 @@ public class graphicMemoryScript : MonoBehaviour
 
     IEnumerator ButtonsDisappear()
     {
-        //KMAudio.KMAudioRef sound = MAudio.PlayGameSoundAtTransformWithRef(KMSoundOverride.SoundEffect.WireSequenceMechanism, transform);
-        if (soundsPlayed == 0)
-        {
-            MAudio.PlaySoundAtTransform("wiresequence_startTrimmed", transform);
-            soundsPlayed++;
-            StartCoroutine(DelayResetCounter());
-        }
+        KMAudio.KMAudioRef sound = MAudio.PlayGameSoundAtTransformWithRef(KMSoundOverride.SoundEffect.WireSequenceMechanism, transform);
         foreach (KMSelectable btn in btns)
         {
             btn.transform.GetChild(7).gameObject.SetActive(false);
@@ -595,10 +577,12 @@ public class graphicMemoryScript : MonoBehaviour
             }
             yield return new WaitForSeconds(0.05f);
         }
-        /*
-        if (sound != null)
-            sound.StopSound();
-        */
+        try
+        {
+            if (sound != null)
+                sound.StopSound();
+        }
+        catch (NullReferenceException) { }
     }
 
     IEnumerator ButtonsOnStrike()
@@ -626,13 +610,7 @@ public class graphicMemoryScript : MonoBehaviour
 
     IEnumerator ButtonAppear()
     {
-        //KMAudio.KMAudioRef sound = MAudio.PlayGameSoundAtTransformWithRef(KMSoundOverride.SoundEffect.WireSequenceMechanism, transform);
-        if (soundsPlayed == 0)
-        {
-            MAudio.PlaySoundAtTransform("wiresequence_startTrimmed", transform);
-            soundsPlayed++;
-            StartCoroutine(DelayResetCounter());
-        }
+        KMAudio.KMAudioRef sound = MAudio.PlayGameSoundAtTransformWithRef(KMSoundOverride.SoundEffect.WireSequenceMechanism, transform);
         for (int i = 0; i < 10; i++)
         {
             if (i > 4)
@@ -648,10 +626,12 @@ public class graphicMemoryScript : MonoBehaviour
 
             yield return new WaitForSeconds(0.05f);
         }
-        /*
-        if (sound != null)
-            sound.StopSound();
-        */
+        try
+        {
+            if (sound != null)
+                sound.StopSound();
+        }
+        catch (NullReferenceException) { }
         btns[lastPress - 1].transform.GetChild(7).gameObject.SetActive(true);
 
         animating = false;
@@ -659,14 +639,7 @@ public class graphicMemoryScript : MonoBehaviour
 
     IEnumerator ButtonDisappear()
     {
-
-        //KMAudio.KMAudioRef sound = MAudio.PlayGameSoundAtTransformWithRef(KMSoundOverride.SoundEffect.WireSequenceMechanism, transform);
-        if (soundsPlayed == 0)
-        {
-            MAudio.PlaySoundAtTransform("wiresequence_startTrimmed", transform);
-            soundsPlayed++;
-            StartCoroutine(DelayResetCounter());
-        }
+        KMAudio.KMAudioRef sound = MAudio.PlayGameSoundAtTransformWithRef(KMSoundOverride.SoundEffect.WireSequenceMechanism, transform);
         btns[lastPress - 1].transform.GetChild(7).gameObject.SetActive(false);
 
         for (int i = 0; i < 10; i++)
@@ -684,10 +657,12 @@ public class graphicMemoryScript : MonoBehaviour
 
             yield return new WaitForSeconds(0.05f);
         }
-        /*
-        if (sound != null)
-            sound.StopSound();
-        */
+        try
+        {
+            if (sound != null)
+                sound.StopSound();
+        }
+        catch (NullReferenceException) { }
     }
 
     public class GraphicMemorySettings
@@ -700,24 +675,11 @@ public class graphicMemoryScript : MonoBehaviour
     //Twitch Plays Handling
     IEnumerator TwitchHandleForcedSolve()
     {
-        requestForceSolve = true;
-        var timePassedSinceAnimation = System.Diagnostics.Stopwatch.StartNew();
         Debug.LogFormat("[Graphic Memory #{0}] Force solve requested viva TP Handler.", moduleId);
-        timePassedSinceAnimation.Start();
         while (btnPresses < btnPressesRequired)
         {
             while (animating)
-            {
                 yield return true;
-                if (timePassedSinceAnimation.Elapsed.TotalSeconds >= 30)
-                {
-                    Debug.LogWarningFormat("[Graphic Memory #{0}] Autosolve handler is taking longer than expected. Abandoning autosolve and bypassing solve checker. Be sure to send a log for this report.", moduleId);
-                    Debug.LogFormat("<Graphic Memory #{0}> Elapsed time reached/exceeded 30 seconds.", moduleId);
-                    yield return ButtonsDisappear();
-                    timePassedSinceAnimation.Stop();
-                    yield break;
-                }
-            }
             if (correctButtons.Any())
             {
                 btns[correctButtons[rnd.Range(0, correctButtons.Count)] - 1].OnInteract();
@@ -725,10 +687,7 @@ public class graphicMemoryScript : MonoBehaviour
             }
             else
                 yield break;
-
         }
-        Debug.LogFormat("<Graphic Memory #{0}> Elapsed time: {1} ms", moduleId, timePassedSinceAnimation.ElapsedMilliseconds);
-        timePassedSinceAnimation.Stop();
         yield return null;
     }
     #pragma warning disable 414
